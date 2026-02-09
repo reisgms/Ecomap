@@ -2,6 +2,7 @@ import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vecto
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import logo from '../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
+import { Input } from '../components/input components/input';
 
 
 
@@ -22,7 +23,9 @@ export default function login (){
                         <Text style={{margin:10, color: 'lightgray', fontSize:14}}>Ou</Text>
                         <View style={loginStyle.linha}></View>
                     </View>
-                    <Text style={loginStyle.loginLabel}>E-mail</Text>
+                    <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons}/>
+                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye'/>
+                    {/* <Text style={loginStyle.loginLabel}>E-mail</Text>
                     <View style={loginStyle.inputBox}>
                     <MaterialIcons name='email' size={20} color={'gray'}/>
                     <TextInput style={loginStyle.input}>seu@email.com</TextInput>
@@ -31,7 +34,7 @@ export default function login (){
                 <View style={loginStyle.inputBox}>
                     <MaterialIcons name='lock' size={20} color={'gray'}/>
                     <TextInput style={loginStyle.input}>********</TextInput>
-                </View>
+                </View> */}
                     <TouchableOpacity style={loginStyle.button}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
                     <Text style={{color: 'white', fontWeight: 'bold', paddingLeft: 10}}>Entrar</Text>
