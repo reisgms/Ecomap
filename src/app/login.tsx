@@ -1,11 +1,14 @@
 import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import logo from '../assets/images/logo.png';
+import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
+import {Href, useRouter} from 'expo-router';
+
 
 
 
 export default function login (){
+    const router = useRouter();
     return ( 
         <View style={loginStyle.container}> 
             <Image style={{width: 120, height: 120}} source={logo} resizeMode='contain'/>
@@ -32,7 +35,7 @@ export default function login (){
                     <MaterialIcons name='lock' size={20} color={'gray'}/>
                     <TextInput style={loginStyle.input}>********</TextInput>
                 </View>
-                    <TouchableOpacity style={loginStyle.button}>
+                    <TouchableOpacity style={loginStyle.button} onPress={() => router.replace('/(tabs)/dashboard' as Href)}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
                     <Text style={{color: 'white', fontWeight: 'bold', paddingLeft: 10}}>Entrar</Text>
                     </TouchableOpacity>
