@@ -1,16 +1,16 @@
 import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import {Href, useRouter} from 'expo-router';
-
+import { Input } from '../components/input components/input';
 
 
 
 export default function login (){
     const router = useRouter();
     return ( 
-        <View style={loginStyle.container}> 
+        <ScrollView contentContainerStyle={loginStyle.content}> 
             <Image style={{width: 120, height: 120}} source={logo} resizeMode='contain'/>
             <Text>Juntos por um ambiente mais limpo e sustentavel</Text>
             <View style={loginStyle.loginBox}> 
@@ -25,16 +25,8 @@ export default function login (){
                         <Text style={{margin:10, color: 'lightgray', fontSize:14}}>Ou</Text>
                         <View style={loginStyle.linha}></View>
                     </View>
-                    <Text style={loginStyle.loginLabel}>E-mail</Text>
-                    <View style={loginStyle.inputBox}>
-                    <MaterialIcons name='email' size={20} color={'gray'}/>
-                    <TextInput style={loginStyle.input}>seu@email.com</TextInput>
-                </View>
-                <Text style={loginStyle.loginLabel}>Senha</Text>
-                <View style={loginStyle.inputBox}>
-                    <MaterialIcons name='lock' size={20} color={'gray'}/>
-                    <TextInput style={loginStyle.input}>********</TextInput>
-                </View>
+                    <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons}/>
+                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye'/>
                     <TouchableOpacity style={loginStyle.button} onPress={() => router.replace('/(tabs)/dashboard' as Href)}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
                     <Text style={{color: 'white', fontWeight: 'bold', paddingLeft: 10}}>Entrar</Text>
@@ -56,6 +48,6 @@ export default function login (){
                     <Text>Ganhe</Text>
                 </View>
             </View>
-        </View>
+        </ScrollView>
     )
 };
