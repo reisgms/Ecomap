@@ -3,13 +3,19 @@ import { Dimensions, StyleSheet } from "react-native";
 
 export const loginStyle = StyleSheet.create({
 
-    // pagina inteira
+    // alinhamento da pagina inteira
     container: {
         flex:1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
+        //alignItems: 'center',
+       // justifyContent: 'center',
+      //  padding: 20,
         //backgroundColor: 'orange' //<-- para visualizar melhor descomente
+    },
+
+// alinhamento da scrowlview
+    content:{
+    alignItems: 'center', 
+    justifyContent: 'center'
     },
 
     //caixa de login

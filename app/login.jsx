@@ -1,5 +1,5 @@
 import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import logo from '../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import { Input } from '../components/input components/input';
@@ -8,7 +8,7 @@ import { Input } from '../components/input components/input';
 
 export default function login (){
     return ( 
-        <View style={loginStyle.container}> 
+        <ScrollView style={loginStyle.container} contentContainerStyle={loginStyle.content}> 
             <Image style={{width: 120, height: 120}} source={logo} resizeMode='contain'/>
             <Text>Juntos por um ambiente mais limpo e sustentavel</Text>
             <View style={loginStyle.loginBox}> 
@@ -25,6 +25,7 @@ export default function login (){
                     </View>
                     <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons}/>
                     <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye'/>
+                    <Input/>
                     {/* <Text style={loginStyle.loginLabel}>E-mail</Text>
                     <View style={loginStyle.inputBox}>
                     <MaterialIcons name='email' size={20} color={'gray'}/>
@@ -56,6 +57,6 @@ export default function login (){
                     <Text>Ganhe</Text>
                 </View>
             </View>
-        </View>
+        </ScrollView>
     )
 };
