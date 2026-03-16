@@ -23,7 +23,7 @@ export const Styles = StyleSheet.create({
     input:{  
     backgroundColor: 'blue', //para ver melhor o input
     height: '100%',
-    width: '100%',
+    width: '50%',
     borderRadius: 10
     },
 
