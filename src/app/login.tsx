@@ -4,35 +4,58 @@ import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import {Href, useRouter} from 'expo-router';
 import { Input } from '../components/input components/input';
+import { useState } from 'react';
+import {auth} from '../../firebaseConfig';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 
 
 export default function login (){
     const router = useRouter();
+
+    const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
+
+    const login = async () => {
+        try {
+            await signInWithEmailAndPassword(auth, email, senha);
+
+            router.replace("/(tabs)/dashboard/mapa");
+        } catch (error: any) {
+            console.error('Erro ao Logar', error);
+        }
+    };
+
     return ( 
         <ScrollView contentContainerStyle={loginStyle.content}> 
             <Image style={{width: 120, height: 120}} source={logo} resizeMode='contain'/>
             <Text>Juntos por um ambiente mais limpo e sustentavel</Text>
             <View style={loginStyle.loginBox}> 
                 <Text style={{fontWeight: 'bold', fontSize:24}}>Entrar</Text>
+
                     <TouchableOpacity style={loginStyle.googleButton}>
                         <AntDesign name='google' size={20}>
                             <Text style={{fontWeight: 'bold'}}>Continuar com Google</Text>
                             </AntDesign>
                     </TouchableOpacity>
+
                      <View style={loginStyle.boxLinha}>
                         <View style={loginStyle.linha}></View>
                         <Text style={{margin:10, color: 'lightgray', fontSize:14}}>Ou</Text>
                         <View style={loginStyle.linha}></View>
                     </View>
-                    <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons}/>
-                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye'/>
-                    <TouchableOpacity style={loginStyle.button} onPress={() => router.replace('/(tabs)/dashboard' as Href)}>
+
+                    <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons} value={email} onChangeText={setEmail}/>
+                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye' value={senha} onChangeText={setSenha}/>
+
+                    <TouchableOpacity style={loginStyle.button} onPress={login}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
                     <Text style={{color: 'white', fontWeight: 'bold', paddingLeft: 10}}>Entrar</Text>
                     </TouchableOpacity>
+
                 <Text style={{color:'green'}}>Esqueci minha Senha</Text>
                 <Text>Não tem uma conta? <Text style={{color:'green', fontWeight:'bold'}}>Cadastre-se</Text></Text>
+
             </View>
             <View style={loginStyle.boxBottom}>
                 <View style={loginStyle.miniBox1}>
