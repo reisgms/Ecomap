@@ -1,5 +1,5 @@
 import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { Image, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View, ScrollView, Alert } from 'react-native';
 import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import {Href, useRouter} from 'expo-router';
@@ -23,6 +23,22 @@ export default function login (){
             router.replace("/(tabs)/dashboard/mapa");
         } catch (error: any) {
             console.error('Erro ao Logar', error);
+
+        if (error.code === "auth/user-not-found") {
+            Alert.alert("Usuário não encontrado", "Redirecionando para a tela de cadastro.");
+            router.push({pathname: "/cadastro",
+                params:{email: email, senha: senha}}
+            );
+
+        } else if (error.code === "auth/wrong-password") {
+            Alert.alert("Senha incorreta", "Verifique sua senha e tente novamente.");
+
+        } else if (error.code === "auth/invalid-email") {
+            Alert.alert("Email inválido", "Digite um email válido.");
+        } else {
+            Alert.alert("Erro", "Não foi possível entrar. Tente novamente.");
+
+        }
         }
     };
 
@@ -46,7 +62,7 @@ export default function login (){
                     </View>
 
                     <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons} value={email} onChangeText={setEmail}/>
-                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye' value={senha} onChangeText={setSenha}/>
+                    <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye' value={senha} onChangeText={setSenha} secureTextEntry/>
 
                     <TouchableOpacity style={loginStyle.button} onPress={login}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
