@@ -2,12 +2,16 @@ import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vecto
 import { Image, Text, TextInput, TouchableOpacity, View, ScrollView, Alert } from 'react-native';
 import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
-import {Href, useRouter} from 'expo-router';
+import {useRouter} from 'expo-router';
 import { Input } from '../components/input components/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {auth} from '../../firebaseConfig';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 
+
+WebBrowser.maybeCompleteAuthSession();
 
 
 export default function login (){
@@ -16,7 +20,25 @@ export default function login (){
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
 
-    const login = async () => {
+    //Configuração para login com Google
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        clientId: "217945753246-n8i8s13a4jvuftipdta0t6p9t3ld42ul.apps.googleusercontent.com"
+    });
+
+    //login com Google
+    useEffect(() => {
+        if (response?.type === 'success' && response.authentication) {
+            const {authentication} = response;
+            const credential = GoogleAuthProvider.credential(authentication.idToken);
+            signInWithCredential(auth, credential)
+            .then(() => router.replace("/(tabs)/dashboard/mapa"))
+            .catch((error) => console.error("Erro Google:", error));
+        }
+    }, [response]);
+            
+
+    //Login com Email e senha
+    const loginEmailSenha = async () => {
         try {
             await signInWithEmailAndPassword(auth, email, senha);
 
@@ -24,11 +46,8 @@ export default function login (){
         } catch (error: any) {
             console.error('Erro ao Logar', error);
 
-        if (error.code === "auth/user-not-found") {
-            Alert.alert("Usuário não encontrado", "Redirecionando para a tela de cadastro.");
-            router.push({pathname: "/cadastro",
-                params:{email: email, senha: senha}}
-            );
+        if (error.code === "auth/invalid-credential") {
+            Alert.alert("Credenciais inválidas");
 
         } else if (error.code === "auth/wrong-password") {
             Alert.alert("Senha incorreta", "Verifique sua senha e tente novamente.");
@@ -49,26 +68,32 @@ export default function login (){
             <View style={loginStyle.loginBox}> 
                 <Text style={{fontWeight: 'bold', fontSize:24}}>Entrar</Text>
 
-                    <TouchableOpacity style={loginStyle.googleButton}>
+                    {/* Botão do Google */}
+                    <TouchableOpacity style={loginStyle.googleButton} disabled={!request} onPress={() => promptAsync()}>
                         <AntDesign name='google' size={20}>
                             <Text style={{fontWeight: 'bold'}}>Continuar com Google</Text>
                             </AntDesign>
                     </TouchableOpacity>
 
+                    {/* Box da linha */}
                      <View style={loginStyle.boxLinha}>
                         <View style={loginStyle.linha}></View>
                         <Text style={{margin:10, color: 'lightgray', fontSize:14}}>Ou</Text>
                         <View style={loginStyle.linha}></View>
                     </View>
+                    {/* Fim do Box da linha */}
 
+                    {/* Inputs de email/senha */}
                     <Input title='Email' IconLeftName='email' IconLeft={MaterialIcons} value={email} onChangeText={setEmail}/>
                     <Input title='Senha' IconLeftName='lock' IconLeft={MaterialIcons} IconRight={AntDesign} IconRightName='eye' value={senha} onChangeText={setSenha} secureTextEntry/>
 
-                    <TouchableOpacity style={loginStyle.button} onPress={login}>
+                    {/* Botão login */}
+                    <TouchableOpacity style={loginStyle.button} onPress={loginEmailSenha}>
                     <MaterialIcons name='login' size={20} color={'white'}/>
                     <Text style={{color: 'white', fontWeight: 'bold', paddingLeft: 10}}>Entrar</Text>
                     </TouchableOpacity>
 
+                    {/* Esqueci minha senha e cadastro */}
                 <Text style={{color:'green'}}>Esqueci minha Senha</Text>
                 <Text>Não tem uma conta? <Text style={{color:'green', fontWeight:'bold'}}>Cadastre-se</Text></Text>
 

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button, View } from "react-native";
 import { auth } from "../../firebaseConfig";
 import { Input } from "../components/input components/input";
+import cadastroStyle from "../styles/cadastroStyle";
 
 export default function Cadastro() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function Cadastro() {
   };
 
   return (
-    <View>
+    <View style={cadastroStyle.container}>
       <Input title="Email" value={email} onChangeText={setEmail} />
       <Input title="Senha" value={senha} onChangeText={setSenha} secureTextEntry />
       <Button title="Cadastrar" onPress={signUp} />
