@@ -15,15 +15,14 @@ export const Styles = StyleSheet.create({
     borderRadius: 10,
     alignItems:'center',
     paddingLeft: 10,
-    backgroundColor: 'red',//'#F0F0F0',
+    backgroundColor: '#F0F0F0',
     borderColor: '#F0F0F0',
     
     },
 
     input:{  
-    backgroundColor: 'blue', //para ver melhor o input
     height: '100%',
-    width: '100%',
+    width: '50%',
     borderRadius: 10
     },
 
