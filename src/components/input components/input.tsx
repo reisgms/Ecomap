@@ -2,7 +2,7 @@ import React, { forwardRef, Fragment, LegacyRef} from "react";
 
 import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { Text, TextInput, TextInputProps, TouchableOpacity, View } from "react-native";
-import { Styles } from "./styles";
+import { inputStyles } from "../components Sytles/inputStyles";
 
 
 type IconComponent = React.ComponentType<React.ComponentProps<typeof MaterialIcons>> |
@@ -46,20 +46,20 @@ export const Input = forwardRef((Props: props, ref: LegacyRef<TextInput> | null)
 
     return (
         <Fragment>
-            <Text style={Styles.loginLabel}>{title}</Text>
-            <View style={[Styles.inputBox, {paddingRight: calcularPaddingRight()}]}>
+            <Text style={inputStyles.loginLabel}>{title}</Text>
+            <View style={[inputStyles.inputBox, {paddingRight: calcularPaddingRight()}]}>
                 {IconLeft && IconLeftName && (
                     <TouchableOpacity>
-                        <IconLeft name={IconLeftName as any} size={20} color={'gray'} style={Styles.icon}/>
+                        <IconLeft name={IconLeftName as any} size={20} color={'gray'} style={inputStyles.icon}/>
                     </TouchableOpacity>
                 )}
-                <TextInput style={[Styles.input, {width: calcularEspaçoIcone()}
+                <TextInput style={[inputStyles.input, {width: calcularEspaçoIcone()}
                 ]}
                 {...rest}/>
 
                 {IconRight && IconRightName && (
                     <TouchableOpacity>
-                        <IconRight name={IconRightName as any} size={20} color={'gray'} style={Styles.icon}/>
+                        <IconRight name={IconRightName as any} size={20} color={'gray'} style={inputStyles.icon}/>
                     </TouchableOpacity>
                 )}
             </View>

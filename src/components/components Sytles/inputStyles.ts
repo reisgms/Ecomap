@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-export const Styles = StyleSheet.create({
+export const inputStyles = StyleSheet.create({
     loginLabel:{
         fontWeight: 'bold',
         alignSelf:'flex-start',

@@ -1,13 +1,15 @@
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Text, TouchableOpacity, View, Modal, ScrollView} from 'react-native';
 import { useEffect,useState } from 'react';
 import { mapaStyle } from '@/src/styles/mapaStyles';
 import MapView, {Marker} from 'react-native-maps';
 import { useRouter } from "expo-router";
 import * as Location from 'expo-location';
+import { CustomModal } from '@/src/components/input components/modal';
 
 
 export default function Mapa() {
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -41,9 +43,12 @@ export default function Mapa() {
             </View>
 
             <View style={mapaStyle.viewBotao}>
-                <TouchableOpacity style={mapaStyle.botao} 
-                onPress={() => router.push('/(tabs)/dashboard/reportes')}><Text>+</Text></TouchableOpacity>
-            </View>                
+                <TouchableOpacity style={mapaStyle.botao} onPress={() => setModalVisible(true)}>
+                    <Text>+</Text>
+                </TouchableOpacity>
+            </View>
+
+            <CustomModal visible={modalVisible} onClose={() => setModalVisible(false)}/>               
         </View>
 
         
