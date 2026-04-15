@@ -3,6 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ScrollView,Image } from "react-nat
 import * as ImagePicker from 'expo-image-picker';
 import { modalStyles } from "../components Sytles/modalStyles";
 import { MaterialIcons } from '@expo/vector-icons';
+import { Input } from '../input components/input';
 
 type CustomModalProps = {
     visible: boolean;
@@ -52,6 +53,11 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
                 </>
               )}
             </TouchableOpacity>
+            <Input
+                title="Descrição do reporte"
+                placeholder="De detalhes sobre o descarte"
+            />
+
 
           </ScrollView>
 
