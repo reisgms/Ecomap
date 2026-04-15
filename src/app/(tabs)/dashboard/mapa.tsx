@@ -1,18 +1,38 @@
 import {Text, TouchableOpacity, View} from 'react-native';
+import { useEffect,useState } from 'react';
 import { mapaStyle } from '@/src/styles/mapaStyles';
 import MapView, {Marker} from 'react-native-maps';
 import { useRouter } from "expo-router";
+import * as Location from 'expo-location';
 
 
 export default function Mapa() {
+    const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            let {status} = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permissão de localização negada');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setLocation(location.coords);
+        })();
+    },[]);
+
+    if (!location) {
+        return (<View style={mapaStyle.container}>
+            <Text>Carregando Mapa...</Text>
+            </View>
+        )
+    }
+
     const router = useRouter();
     return (
         <View style={mapaStyle.container}>
-            <MapView style={mapaStyle.mapa} initialRegion={{latitude:-3.1190, longitude: -60.0217, latitudeDelta: 0.05, longitudeDelta: 0.05}} scrollEnabled={true} zoomEnabled={true}>
-                <Marker coordinate={{ latitude: -3065809, longitude: -60.050496 }}
-                    title="Ponto inicial"
-                    description="Exemplo de marcador"
-                />
+            <MapView style={mapaStyle.mapa} initialRegion={{latitude:location.latitude, longitude: location.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01}} showsUserLocation={true} scrollEnabled={true} zoomEnabled={true}>
             </MapView>
             <View style={mapaStyle.legenda}>
                 <Text>Pendente</Text>
