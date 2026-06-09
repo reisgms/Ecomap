@@ -1,82 +1,5 @@
-// import React, { use, useState } from "react";
-// import { Modal, View, Text, TouchableOpacity, ScrollView,Image } from "react-native";
-// import * as ImagePicker from 'expo-image-picker';
-// import { modalStyles } from "../components Sytles/modalStyles";
-// import { MaterialIcons } from '@expo/vector-icons';
-// import { Input } from '../input components/input';
-
-// type CustomModalProps = {
-//     visible: boolean;
-//     onClose: () => void;
-
-// };
-
-// export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) => {
-//     const [image, setImage] = useState<string | null>(null);
-    
-//     async function abrirCamera() {
-//         const {status} = await ImagePicker.requestCameraPermissionsAsync();
-//         if (status !== "granted") {
-//             alert("Permissão para acessar a câmera negada");
-//             return;
-
-//         }
-
-//         const resultado = await ImagePicker.launchCameraAsync({
-//             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-//             allowsEditing: true,
-//             quality: 1,
-//         });
-        
-//         if (!resultado.canceled) {
-//             setImage(resultado.assets[0].uri);
-//         }
-//     }
-
-//     return (
-//     <Modal
-//       visible={visible}
-//       transparent={true}
-//       animationType="slide"
-//       onRequestClose={onClose}
-//     >
-//       <View style={modalStyles.overlay}>
-//         <View style={modalStyles.modalBox}>
-//           <ScrollView>
-//             <TouchableOpacity style={modalStyles.photoSection} onPress={abrirCamera}>
-//               {image ? (
-//                 <Image source={{ uri: image }} style={modalStyles.photoPreview} />
-//               ) : (
-//                 <>
-//                   <Text style={modalStyles.photoText}>Clique aqui para adicionar uma foto</Text>
-//                   <MaterialIcons name="photo-camera" size={40} color="gray" />
-//                 </>
-//               )}
-//             </TouchableOpacity>
-//             <Input
-//                 title="Descrição do reporte"
-//                 placeholder="De detalhes sobre o descarte"
-//             />
-
-
-//           </ScrollView>
-
-//           <TouchableOpacity style={modalStyles.closeButton} onPress={onClose}>
-//             <Text style={modalStyles.closeText}>X</Text>
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     </Modal>
-//   ); 
-// }
-
-
-
-
-
-
 import React, { useState } from "react";
-import { Modal, View, Text, TouchableOpacity, ScrollView, Image, Dimensions } from "react-native";
+import { Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -92,10 +15,22 @@ type CustomModalProps = {
   onClose: () => void;
 };
 
+const estadoInicial = {
+  image: null as string | null,
+  descricao: "",
+  selecionados: [] as string[],
+};
+
 export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) => {
-  const [image, setImage] = useState<string | null>(null);
-  const [descricao, setDescricao] = useState<string>("");
-  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [image, setImage] = useState(estadoInicial.image);
+  const [descricao, setDescricao] = useState(estadoInicial.descricao);
+  const [selecionados, setSelecionados] = useState(estadoInicial.selecionados);
+
+  function limparCache() {
+    setImage(null);
+    setDescricao("");
+    setSelecionados([]);
+  }
 
   async function abrirCamera() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -145,6 +80,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
 
       await addDoc(collection(db, "reportes"), dados);
       alert("Reporte salvo com sucesso!");
+      limparCache();
       onClose();
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -152,12 +88,17 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
     }
   }
 
+  function handleCancelar() {
+    limparCache();
+    onClose();
+  }
+
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleCancelar}
     >
       <View style={modalStyles.overlay}>
         <View style={modalStyles.modalBox}>
@@ -197,13 +138,16 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={modalStyles.saveButton} onPress={salvarReporte}>
-            <Text style={modalStyles.saveText}>Salvar</Text>
-          </TouchableOpacity>
+          {/* Botões lado a lado */}
+          <View style={modalStyles.botoesRow}>
+            <TouchableOpacity style={modalStyles.cancelButton} onPress={handleCancelar}>
+              <Text style={modalStyles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={modalStyles.closeButton} onPress={onClose}>
-            <Text style={modalStyles.closeText}>X</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={modalStyles.saveButton} onPress={salvarReporte}>
+              <Text style={modalStyles.saveText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>

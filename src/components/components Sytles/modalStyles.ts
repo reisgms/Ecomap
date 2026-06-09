@@ -29,6 +29,7 @@ export const modalStyles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 10,
     padding: 15,
+    height: 250,
   },
   photoPreview: {
     width: 200,
@@ -58,6 +59,7 @@ export const modalStyles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
+    flex: 1,
   },
   saveText: {
     color: "#fff",
@@ -80,4 +82,23 @@ export const modalStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  botoesRow: {
+  flexDirection: "row",
+  gap: 10,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+},
+cancelButton: {
+  flex: 1,
+  backgroundColor: "#e0e0e0",
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: "center",
+  marginTop: 10,
+},
+cancelText: {
+  color: "#333",
+  fontWeight: "bold",
+  fontSize: 16,
+},
 });

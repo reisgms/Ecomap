@@ -1,0 +1,41 @@
+{
+  "project_info": {
+    "project_number": "217945753246",
+    "project_id": "ecomap-5e73e",
+    "storage_bucket": "ecomap-5e73e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217945753246:android:141fbe98a3d87bfc9fdd8f",
+        "android_client_info": {
+          "package_name": "com.ecomap.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCClEtuQJg_Jm2OjUbYm0ztorXLKPvDnAI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217945753246-borcksj5edesl7kej6ahr6vtsgvkpe64.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "217945753246-6fr2jt110qds05rca43kv2q0rl8lfm23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ecomap.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

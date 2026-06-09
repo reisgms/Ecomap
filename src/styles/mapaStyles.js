@@ -10,8 +10,8 @@ export const mapaStyle = StyleSheet.create({
   },
   legenda: {
     position: "absolute",
-    bottom: 100,
-    left: 20,
+    bottom: 30,
+    left: 10,
     backgroundColor: "rgba(255,255,255,0.9)",
     padding: 12,
     borderRadius: 10,

@@ -1,18 +1,12 @@
-// 
-
-
-
-
-
-
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { mapaStyle } from '../../../styles/mapaStyles';
-import MapView, { Marker } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { CustomModal } from '../../../components/modal components/modal';
 import { db } from "../../../../firebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
+import { getMapHTML } from './../../../components/map Components/mapComponent';
 
 const coresPorTipo: Record<string, string> = {
     "Orgânico": "#8B4513",
@@ -27,6 +21,7 @@ export default function Mapa() {
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [reportes, setReportes] = useState<any[]>([]);
+    const webViewRef = useRef<WebView>(null);
 
     useEffect(() => {
         (async () => {
@@ -35,8 +30,8 @@ export default function Mapa() {
                 console.log('Permissão de localização negada');
                 return;
             }
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location.coords);
+            let loc = await Location.getCurrentPositionAsync({});
+            setLocation(loc.coords);
         })();
     }, []);
 
@@ -48,6 +43,37 @@ export default function Mapa() {
         return () => unsubscribe();
     }, []);
 
+    useEffect(() => {
+        if (webViewRef.current && location && reportes.length >= 0) {
+            const markers = reportes.map(r => ({
+                lat: r.localizacao.latitude,
+                lng: r.localizacao.longitude,
+                title: r.tipos?.join(", ") ?? "",
+                description: r.descricao ?? "",
+                color: coresPorTipo[r.tipos?.[0]] || "#000000",
+            }));
+
+            webViewRef.current.injectJavaScript(`
+                updateMarkers(${JSON.stringify(markers)});
+                true;
+            `);
+        }
+    }, [reportes, location]);
+
+    const handleMapLoad = () => {
+        const markers = reportes.map(r => ({
+            lat: r.localizacao.latitude,
+            lng: r.localizacao.longitude,
+            title: r.tipos?.join(", ") ?? "",
+            description: r.descricao ?? "",
+            color: coresPorTipo[r.tipos?.[0]] || "#000000",
+        }));
+        webViewRef.current?.injectJavaScript(`
+            updateMarkers(${JSON.stringify(markers)});
+            true;
+        `);
+    };
+
     if (!location) {
         return (
             <View style={mapaStyle.container}>
@@ -58,34 +84,16 @@ export default function Mapa() {
 
     return (
         <View style={mapaStyle.container}>
-            <MapView
+            <WebView
+                ref={webViewRef}
                 style={mapaStyle.mapa}
-                initialRegion={{
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                }}
-                showsUserLocation={true}
-            >
-                {reportes.map((reporte) => {
-                    const cor = coresPorTipo[reporte.tipos?.[0]] || "#000";
-                    return (
-                        <Marker
-                            key={reporte.id}
-                            coordinate={{
-                                latitude: reporte.localizacao.latitude,
-                                longitude: reporte.localizacao.longitude,
-                            }}
-                            title={reporte.tipos.join(", ")}
-                            description={reporte.descricao}
-                            pinColor={cor}
-                        />
-                    );
-                })}
-            </MapView>
+                source={{ html: getMapHTML(location.latitude, location.longitude) }}
+                javaScriptEnabled
+                domStorageEnabled
+                originWhitelist={['*']}
+                onLoad={handleMapLoad}
+            />
 
-            {/* Legenda */}
             <View style={mapaStyle.legenda}>
                 {Object.entries(coresPorTipo).map(([tipo, cor]) => (
                     <View key={tipo} style={mapaStyle.legendaItem}>
@@ -95,14 +103,12 @@ export default function Mapa() {
                 ))}
             </View>
 
-            {/* Botão flutuante */}
             <View style={mapaStyle.viewBotao}>
                 <TouchableOpacity style={mapaStyle.botao} onPress={() => setModalVisible(true)}>
                     <Text style={mapaStyle.botaoTexto}>+</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Modal fora do MapView */}
             <CustomModal visible={modalVisible} onClose={() => setModalVisible(false)} />
         </View>
     );
