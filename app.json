@@ -16,6 +16,11 @@
       "supportsTablet": true
     },
     "android": {
+      "config":{
+        "googleMaps":{
+          "apiKey": "AIzaSyBzxUya4szE4JizxSB0a3AwcGNxKfbuL3s"
+        }
+      },
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCES_FINE_LOCATION"
@@ -34,6 +39,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png"
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -47,17 +58,17 @@
           }
         }
       ],
-      [
-        "react-native-maps",
-        {
-          "iosGoogleMapsApiKey": "AIzaSyAn3u2RUmWejHBUlbOJgLq-RYDJ6iY1erw",
-          "androidGoogleMapsApiKey": "AIzaSyBSKSGqLW68hcQDG0uKwlOB-nsG66yDso8"
-        }
-      ],
       "expo-web-browser",
       "expo-font",
       "expo-image",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

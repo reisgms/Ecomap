@@ -11,7 +11,7 @@ export const modalStyles = StyleSheet.create({
   },
   modalBox: {
     width: width * 0.9,
-    height: height * 0.7,   // ocupa 70% da altura da tela
+    height: height * 0.7,
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
@@ -62,22 +62,6 @@ export const modalStyles = StyleSheet.create({
     flex: 1,
   },
   saveText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "#f44336",
-    borderRadius: 20,
-    width: 35,
-    height: 35,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

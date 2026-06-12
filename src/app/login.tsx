@@ -41,7 +41,6 @@ export default function Login() {
 
             const credential = GoogleAuthProvider.credential(idToken, accessToken);
             signInWithCredential(auth, credential)
-                .then(() => router.replace('/(tabs)/dashboard/mapa'))
                 .catch((error) => {
                     console.error('Erro Google:', error);
                     Alert.alert('Erro', 'Falha ao autenticar com Google.');
@@ -64,7 +63,6 @@ export default function Login() {
         setLoadingEmail(true);
         try {
             await signInWithEmailAndPassword(auth, email, senha);
-            router.replace('/(tabs)/dashboard/mapa');
         } catch (error: any) {
             console.error('Erro ao Logar', error);
 
@@ -154,10 +152,13 @@ export default function Login() {
                 </TouchableOpacity>
 
                 <Text style={{ color: 'green' }}>Esqueci minha Senha</Text>
-                <Text>
-                    Não tem uma conta?{' '}
-                    <Text style={{ color: 'green', fontWeight: 'bold' }}>Cadastre-se</Text>
-                </Text>
+
+                <TouchableOpacity onPress={() => router.push('/cadastro')}>
+                    <Text>
+                        Não tem uma conta?{' '}
+                        <Text style={{ color: 'green', fontWeight: 'bold' }}>Cadastre-se</Text>
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             <View style={loginStyle.boxBottom}>

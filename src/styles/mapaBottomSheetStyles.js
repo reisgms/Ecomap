@@ -1,0 +1,106 @@
+import { StyleSheet } from "react-native";
+
+export const bottomSheetStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    bottomSheet: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        maxHeight: '70%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 10,
+    },
+    handle: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#ddd',
+        borderRadius: 2,
+        alignSelf: 'center',
+        marginBottom: 16,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    titulo: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 12,
+        gap: 4,
+    },
+    badgeTexto: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: 'bold',
+    },
+    imagem: {
+        width: '100%',
+        height: 180,
+        borderRadius: 10,
+        marginBottom: 12,
+    },
+    tiposRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: 12,
+    },
+    tipoBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 20,
+    },
+    tipoTexto: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+    },
+    infoTexto: {
+        fontSize: 14,
+        color: '#555',
+        flex: 1,
+    },
+    botoesRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 16,
+        flexWrap: 'wrap',
+    },
+    botaoAcao: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 10,
+        gap: 6,
+        minWidth: 120,
+    },
+    botaoAcaoTexto: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+});
