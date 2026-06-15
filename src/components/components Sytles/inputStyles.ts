@@ -1,32 +1,41 @@
 import { StyleSheet } from "react-native";
 
 export const inputStyles = StyleSheet.create({
-    loginLabel:{
+    wrapper: {
+        width: '100%',
+        marginBottom: 12,
+    },
+    loginLabel: {
         fontWeight: 'bold',
-        alignSelf:'flex-start',
-        
+        alignSelf: 'flex-start',
+        marginBottom: 4,
+        color: '#333',
     },
-
-    inputBox:{
-    flexDirection: 'row',
-    width: '100%',
-    height: 50,
-    borderWidth:1,
-    borderRadius: 10,
-    alignItems:'center',
-    paddingLeft: 10,
-    backgroundColor: '#F0F0F0',
-    borderColor: '#F0F0F0',
-    
+    inputBox: {
+        flexDirection: 'row',
+        width: '100%',
+        height: 50,
+        borderWidth: 1.5,
+        borderRadius: 10,
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        backgroundColor: '#F0F0F0',
+        borderColor: '#E0E0E0',
     },
-
-    input:{  
-    height: '100%',
-    width: '50%',
-    borderRadius: 10
+    inputBoxFocado: {
+        borderColor: '#4CAF50',
+        backgroundColor: '#fff',
     },
-
-    icon:{
-    width: '100%',
+    input: {
+        flex: 1,
+        height: '100%',
+        fontSize: 15,
+        color: '#1b1b1b',
+    },
+    icon: {
+        marginRight: 8,
+    },
+    iconBotao: {
+        paddingLeft: 8,
     },
 });

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { ActivityIndicator, Alert, Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';

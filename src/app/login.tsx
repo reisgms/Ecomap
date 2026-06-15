@@ -130,8 +130,6 @@ export default function Login() {
                     title="Senha"
                     IconLeftName="lock"
                     IconLeft={MaterialIcons}
-                    IconRight={AntDesign}
-                    IconRightName="eye"
                     value={senha}
                     onChangeText={setSenha}
                     secureTextEntry
