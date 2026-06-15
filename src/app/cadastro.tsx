@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
 import { Input } from '../components/input components/input';
@@ -27,13 +27,19 @@ export default function Cadastro() {
         try {
             const cred = await createUserWithEmailAndPassword(auth, email, senha);
 
-            // Salva perfil no Firestore
-            await setDoc(doc(db, 'usuarios', cred.user.uid), {
-                nome,
-                email,
-                fotoUrl: null,
-                expoPushToken: null,
-            });
+            try {
+                await setDoc(doc(db, 'usuarios', cred.user.uid), {
+                    nome,
+                    email,
+                    fotoUrl: null,
+                    expoPushToken: null,
+                    primeiroAcesso: true,
+                });
+            } catch (firestoreError) {
+                // Se o perfil não foi salvo, desfaz o cadastro para evitar usuário sem perfil
+                await deleteUser(cred.user);
+                throw firestoreError;
+            }
 
             // O RouteGuard detecta o login e redireciona automaticamente
         } catch (e: any) {

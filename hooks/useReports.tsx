@@ -2,25 +2,54 @@ import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "fi
 import { useEffect, useState } from "react";
 import { db } from "../firebaseConfig";
 import { enviarPushNotification } from "../services/notifications";
-import { Reporte } from "../types/reports";
+import { Reporte, StatusReporte } from "../types/reports";
 
 export function useReportes(
     usuario: { uid: string; nome: string } | null,
-    apenasAtivos: boolean = false
+    apenasAtivos: boolean = false,
+    apenasDoUsuario: boolean = false
 ) {
     const [reportes, setReportes] = useState<Reporte[]>([]);
+    const [filtroStatus, setFiltroStatus] = useState<StatusReporte | "Todos">("Todos");
+    const [filtroTipos, setFiltroTipos] = useState<string[]>([]);
 
     useEffect(() => {
-        const q = apenasAtivos
-            ? query(collection(db, "reportes"), where("status", "!=", "Resolvido"))
-            : collection(db, "reportes");
+        let q;
+
+        if (apenasDoUsuario && usuario) {
+            // Aba Reportes: apenas os reportes do usuário logado, todos os status
+            q = query(
+                collection(db, "reportes"),
+                where("donoId", "==", usuario.uid)
+            );
+        } else if (apenasAtivos) {
+            // Mapa: todos os reportes ativos (excluí resolvidos e cancelados)
+            q = query(
+                collection(db, "reportes"),
+                where("status", "not-in", ["Resolvido", "Cancelado"])
+            );
+        } else {
+            q = collection(db, "reportes");
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const dados = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Reporte));
             setReportes(dados);
         });
         return () => unsubscribe();
-    }, [apenasAtivos]);
+    }, [apenasAtivos, apenasDoUsuario, usuario?.uid]);
+
+    const reportesFiltrados = reportes.filter(r => {
+        const passaStatus = filtroStatus === "Todos" || r.status === filtroStatus;
+        const passaTipo = filtroTipos.length === 0 || r.tipos.some(t => filtroTipos.includes(t));
+        return passaStatus && passaTipo;
+    });
+
+    function diasPendente(timestamp: string): number {
+        const criado = new Date(timestamp).getTime();
+        const agora = Date.now();
+        return Math.floor((agora - criado) / (1000 * 60 * 60 * 24));
+    }
 
     async function handleColetar(reporteId: string) {
         if (!usuario) return;
@@ -28,6 +57,10 @@ export function useReportes(
         const snap = await getDoc(reporteRef);
         const reporte = snap.data();
         if (!reporte) return;
+
+        if (reporte.status !== 'Pendente') {
+            throw new Error('Este reporte já foi coletado por outro usuário.');
+        }
 
         await updateDoc(reporteRef, {
             status: 'Em Coleta',
@@ -40,18 +73,74 @@ export function useReportes(
         if (dono?.expoPushToken) {
             await enviarPushNotification(
                 dono.expoPushToken,
-                '🗑️ Alguém vai coletar seu reporte!',
+                '♻️ Alguém quer coletar seu reporte!',
                 `${usuario.nome} se ofereceu para coletar: ${reporte.tipos?.join(', ')}`
             );
         }
     }
 
     async function handleConfirmarColeta(reporteId: string) {
-        await updateDoc(doc(db, 'reportes', reporteId), {
+        if (!usuario) return;
+        const reporteRef = doc(db, 'reportes', reporteId);
+        const snap = await getDoc(reporteRef);
+        const reporte = snap.data();
+        if (!reporte) return;
+        if (reporte.donoId !== usuario.uid) return;
+
+        await updateDoc(reporteRef, {
             status: 'Resolvido',
             resolvidoEm: new Date().toISOString(),
         });
+
+        if (reporte.coletorId) {
+            const coletorSnap = await getDoc(doc(db, 'usuarios', reporte.coletorId));
+            const coletor = coletorSnap.data();
+            if (coletor?.expoPushToken) {
+                await enviarPushNotification(
+                    coletor.expoPushToken,
+                    '✅ Coleta confirmada!',
+                    `${usuario.nome} confirmou que você coletou: ${reporte.tipos?.join(', ')}`
+                );
+            }
+        }
     }
 
-    return { reportes, handleColetar, handleConfirmarColeta };
+    async function handleCancelarColeta(reporteId: string) {
+        if (!usuario) return;
+        const reporteRef = doc(db, 'reportes', reporteId);
+        const snap = await getDoc(reporteRef);
+        const reporte = snap.data();
+        if (!reporte) return;
+
+        await updateDoc(reporteRef, {
+            status: 'Pendente',
+            coletorId: null,
+            coletorNome: null,
+            canceladoEm: new Date().toISOString(),
+        });
+
+        if (reporte.coletorId) {
+            const coletorSnap = await getDoc(doc(db, 'usuarios', reporte.coletorId));
+            const coletor = coletorSnap.data();
+            if (coletor?.expoPushToken) {
+                await enviarPushNotification(
+                    coletor.expoPushToken,
+                    '❌ Coleta cancelada',
+                    `${usuario.nome} cancelou a coleta: ${reporte.tipos?.join(', ')}`
+                );
+            }
+        }
+    }
+
+    return {
+        reportes: reportesFiltrados,
+        filtroStatus,
+        setFiltroStatus,
+        filtroTipos,
+        setFiltroTipos,
+        diasPendente,
+        handleColetar,
+        handleConfirmarColeta,
+        handleCancelarColeta,
+    };
 }

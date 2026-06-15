@@ -1,10 +1,9 @@
 import { useEffect, useState, createContext, useContext } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import * as Notifications from 'expo-notifications';
 
-// Configura handler globalmente aqui, fora do hook
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,
@@ -26,9 +25,16 @@ export type UsuarioLogado = {
 type AuthContextType = {
     usuario: UsuarioLogado | null;
     loading: boolean;
+    primeiroAcesso: boolean;
+    marcarAcessoVisto: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({ usuario: null, loading: true });
+const AuthContext = createContext<AuthContextType>({
+    usuario: null,
+    loading: true,
+    primeiroAcesso: false,
+    marcarAcessoVisto: async () => {},
+});
 
 async function registrarPushToken(uid: string) {
     try {
@@ -44,47 +50,70 @@ async function registrarPushToken(uid: string) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [usuario, setUsuario] = useState<UsuarioLogado | null>(null);
     const [loading, setLoading] = useState(true);
+    const [primeiroAcesso, setPrimeiroAcesso] = useState(false);
 
     useEffect(() => {
-        const unsub = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+        let unsubDoc: (() => void) | null = null;
+        let pushTokenRegistrado = false;
+
+        const unsub = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+            if (unsubDoc) { unsubDoc(); unsubDoc = null; }
+            pushTokenRegistrado = false;
+
             if (firebaseUser) {
                 const ref = doc(db, 'usuarios', firebaseUser.uid);
-                const snap = await getDoc(ref);
 
-                if (snap.exists()) {
-                    const perfil = snap.data();
-                    setUsuario({
-                        uid: firebaseUser.uid,
-                        nome: perfil.nome ?? firebaseUser.displayName ?? '',
-                        email: firebaseUser.email ?? '',
-                        expoPushToken: perfil.expoPushToken,
-                        fotoUrl: perfil.fotoUrl ?? firebaseUser.photoURL ?? null,
-                    });
-                } else {
-                    const novoPerfil = {
-                        nome: firebaseUser.displayName ?? '',
-                        email: firebaseUser.email ?? '',
-                        fotoUrl: firebaseUser.photoURL ?? null,
-                        expoPushToken: null,
-                    };
-                    await setDoc(ref, novoPerfil);
-                    setUsuario({ uid: firebaseUser.uid, ...novoPerfil });
-                }
+                unsubDoc = onSnapshot(ref, async (snap) => {
+                    if (snap.exists()) {
+                        const perfil = snap.data();
+                        setUsuario({
+                            uid: firebaseUser.uid,
+                            nome: perfil.nome ?? firebaseUser.displayName ?? '',
+                            email: firebaseUser.email ?? '',
+                            expoPushToken: perfil.expoPushToken,
+                            fotoUrl: perfil.fotoUrl ?? firebaseUser.photoURL ?? null,
+                        });
+                        setPrimeiroAcesso(perfil.primeiroAcesso === true);
 
-                // Registra push token após login — momento correto
-                await registrarPushToken(firebaseUser.uid);
-
+                        // Registra push token apenas uma vez por sessão, após o doc existir
+                        if (!pushTokenRegistrado) {
+                            pushTokenRegistrado = true;
+                            registrarPushToken(firebaseUser.uid);
+                        }
+                    } else if (firebaseUser.displayName) {
+                        // Primeiro login social (Google): cria perfil com flag de primeiro acesso
+                        await setDoc(ref, {
+                            nome: firebaseUser.displayName,
+                            email: firebaseUser.email ?? '',
+                            fotoUrl: firebaseUser.photoURL ?? null,
+                            expoPushToken: null,
+                            primeiroAcesso: true,
+                        });
+                        // onSnapshot dispara novamente com o doc criado
+                    }
+                    setLoading(false);
+                });
             } else {
                 setUsuario(null);
+                setPrimeiroAcesso(false);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
-        return unsub;
+        return () => {
+            unsub();
+            if (unsubDoc) unsubDoc();
+        };
     }, []);
 
+    async function marcarAcessoVisto() {
+        if (!usuario) return;
+        setPrimeiroAcesso(false);
+        await updateDoc(doc(db, 'usuarios', usuario.uid), { primeiroAcesso: false });
+    }
+
     return (
-        <AuthContext.Provider value={{ usuario, loading }}>
+        <AuthContext.Provider value={{ usuario, loading, primeiroAcesso, marcarAcessoVisto }}>
             {children}
         </AuthContext.Provider>
     );

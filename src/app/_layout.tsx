@@ -1,27 +1,30 @@
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../../contexts/authContext';
-import { Stack } from 'expo-router';
 
 function RouteGuard() {
-    const { usuario, loading } = useAuth();
+    const { usuario, loading, primeiroAcesso } = useAuth();
     const segments = useSegments();
     const router = useRouter();
 
     useEffect(() => {
         if (loading) return;
 
-        const telaPublica = !segments[0]
-            || segments[0] === 'login'
-            || segments[0] === 'cadastro';
+        const tela = segments[0] as string | undefined;
+        const telaPublica = !tela || tela === 'login' || tela === 'cadastro';
+        const naBemVindo = tela === 'bemvindo';
 
         if (!usuario && !telaPublica) {
+            // Não autenticado fora de tela pública → login
             router.replace('/login');
         } else if (usuario && telaPublica) {
-            router.replace('/(tabs)/mapa');
+            // Autenticado em tela pública → tela de boas-vindas
+            router.replace('/bemvindo');
+        } else if (usuario && naBemVindo) {
+            // Já está na tela de boas-vindas — deixa o componente controlar a navegação
         }
-    }, [usuario, loading, segments]);
+    }, [usuario, loading]);
 
     if (loading) {
         return (
@@ -36,7 +39,8 @@ function RouteGuard() {
             <Stack.Screen name="index" />
             <Stack.Screen name="login" />
             <Stack.Screen name="cadastro" />
-            <Stack.Screen name="(tabs)/dashboard" /> {/* ← era "(tabs)" */}
+            <Stack.Screen name="bemvindo" />
+            <Stack.Screen name="(tabs)" />
         </Stack>
     );
 }

@@ -6,9 +6,12 @@ export const cardStyles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 8,
     marginHorizontal: 12,
-    flexDirection: "row",
+    flexDirection: "column",
     elevation: 3,
     overflow: "hidden",
+  },
+  cardRow: {
+    flexDirection: "row",
   },
   cardImage: {
     width: 100,

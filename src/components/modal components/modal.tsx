@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { ActivityIndicator, Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
     const [image, setImage] = useState<string | null>(null);
     const [descricao, setDescricao] = useState('');
     const [selecionados, setSelecionados] = useState<string[]>([]);
+    const [salvando, setSalvando] = useState(false);
 
     function limparCache() {
         setImage(null);
@@ -43,6 +44,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
 
     async function salvarReporte() {
         if (!usuario) { alert('Usuário não autenticado'); return; }
+        if (selecionados.length === 0) { alert('Selecione ao menos um tipo de resíduo.'); return; }
+        if (salvando) return;
+        setSalvando(true);
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') { alert('Permissão de localização negada'); return; }
@@ -68,6 +72,8 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
         } catch (error) {
             console.error('Erro ao salvar:', error);
             alert('Erro ao salvar no Firebase');
+        } finally {
+            setSalvando(false);
         }
     }
 
@@ -110,8 +116,11 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
                         <TouchableOpacity style={modalStyles.cancelButton} onPress={handleCancelar}>
                             <Text style={modalStyles.cancelText}>Cancelar</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={modalStyles.saveButton} onPress={salvarReporte}>
-                            <Text style={modalStyles.saveText}>Salvar</Text>
+                        <TouchableOpacity style={modalStyles.saveButton} onPress={salvarReporte} disabled={salvando}>
+                            {salvando
+                                ? <ActivityIndicator color="#fff" size="small" />
+                                : <Text style={modalStyles.saveText}>Salvar</Text>
+                            }
                         </TouchableOpacity>
                     </View>
                 </View>

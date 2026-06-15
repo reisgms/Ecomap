@@ -1,41 +1,58 @@
-import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Image, Modal, Platform } from 'react-native';
-import { useState } from 'react';
-import { AppleMaps, GoogleMaps } from 'expo-maps';
 import { MaterialIcons } from '@expo/vector-icons';
+import { AppleMaps, GoogleMaps } from 'expo-maps';
+import { useState } from 'react';
+import { Alert, Image, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { coresPorTipo, statusConfig } from '../../../constantes/status';
 import { useAuth } from '../../../contexts/authContext';
 import { useLocation } from '../../../hooks/useLocation';
+import { usePermissoesReporte } from '../../../hooks/usePermissioesReporte';
 import { useReportes } from '../../../hooks/useReports';
-import { CustomModal } from '../../components/modal components/modal';
-import { coresPorTipo, statusConfig } from '../../../constantes/status';
 import { Reporte } from '../../../types/reports';
-import { mapaStyle } from '../../styles/mapaStyles';
+import { CustomModal } from '../../components/modal components/modal';
 import { bottomSheetStyles } from '../../styles/mapaBottomSheetStyles';
+import { mapaStyle } from '../../styles/mapaStyles';
 
 export default function Mapa() {
     const { usuario } = useAuth();
     const location = useLocation();
-    const { reportes, handleColetar, handleConfirmarColeta } = useReportes(usuario, true);
-
     const [modalCriarVisible, setModalCriarVisible] = useState(false);
-    const [reporteSelecionado, setReporteSelecionado] = useState<Reporte | null>(null);
+    const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
 
-    function handlePinPress(reporte: Reporte) {
-        setReporteSelecionado(reporte);
+    const { reportes, handleColetar, handleConfirmarColeta, handleCancelarColeta } = useReportes(usuario, true);
+
+    // Deriva o reporte do array em tempo real — reflete atualizações do Firestore sem fechar o modal
+    const reporteSelecionado = idSelecionado ? (reportes.find(r => r.id === idSelecionado) ?? null) : null;
+
+    const { podeColetar, podeConfirmar, podeCancelar } = usePermissoesReporte(reporteSelecionado, usuario?.uid);
+
+    function handleMarkerClick(markerId: string | undefined) {
+        if (!markerId) return;
+        setIdSelecionado(markerId);
     }
 
     function fecharDetalhes() {
-        setReporteSelecionado(null);
+        setIdSelecionado(null);
     }
 
     async function onColetar(id: string) {
-        await handleColetar(id);
-        Alert.alert('✅ Coleta registrada!', 'O dono do reporte foi notificado.');
-        fecharDetalhes();
+        try {
+            await handleColetar(id);
+            Alert.alert('✅ Coleta registrada!', 'O dono do reporte foi notificado.');
+            fecharDetalhes();
+        } catch (e: any) {
+            Alert.alert('Não foi possível coletar', e?.message ?? 'Tente novamente.');
+        }
     }
 
     async function onConfirmar(id: string) {
         await handleConfirmarColeta(id);
         Alert.alert('✅ Coleta confirmada!', 'O reporte foi marcado como resolvido.');
+        fecharDetalhes();
+    }
+
+    async function onCancelar(id: string) {
+        await handleCancelarColeta(id);
+        Alert.alert('Coleta cancelada', 'O reporte voltou para Pendente.');
         fecharDetalhes();
     }
 
@@ -47,27 +64,32 @@ export default function Mapa() {
         );
     }
 
-    const markers = reportes.map((reporte) => ({
+    // Google Maps markers (sem tintColor — não suportado)
+    const googleMarkers: GoogleMaps.Marker[] = reportes.map((reporte) => ({
         id: reporte.id,
         coordinates: {
             latitude: reporte.localizacao.latitude,
             longitude: reporte.localizacao.longitude,
         },
-        tintColor: coresPorTipo[reporte.tipos?.[0]] || '#000000',
-        onPress: () => handlePinPress(reporte),
+        title: reporte.tipos?.[0] ?? 'Reporte',
     }));
 
-    const mapaProps = {
-        style: mapaStyle.mapa,
-        cameraPosition: {
-            coordinates: {
-                latitude: location.latitude,
-                longitude: location.longitude,
-            },
-            zoom: 15,
+    // Apple Maps markers (suporta tintColor)
+    const appleMarkers: AppleMaps.Marker[] = reportes.map((reporte) => ({
+        id: reporte.id,
+        coordinates: {
+            latitude: reporte.localizacao.latitude,
+            longitude: reporte.localizacao.longitude,
         },
-        markers,
-        showsUserLocation: true,
+        tintColor: coresPorTipo[reporte.tipos?.[0]] ?? '#FF6B35',
+    }));
+
+    const cameraPosition = {
+        coordinates: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+        },
+        zoom: 15,
     };
 
     return (
@@ -76,11 +98,19 @@ export default function Mapa() {
             {Platform.OS === 'ios'
                 ? (
                     <AppleMaps.View
-                        {...mapaProps}
+                        style={mapaStyle.mapa}
+                        cameraPosition={cameraPosition}
+                        markers={appleMarkers}
+                        showsUserLocation
+                        onMarkerClick={(marker) => handleMarkerClick(marker.id)}
                     />
                 ) : (
                     <GoogleMaps.View
-                        {...mapaProps}
+                        style={mapaStyle.mapa}
+                        cameraPosition={cameraPosition}
+                        markers={googleMarkers}
+                        showsUserLocation
+                        onMarkerClick={(marker) => handleMarkerClick(marker.id)}
                     />
                 )
             }
@@ -195,8 +225,7 @@ export default function Mapa() {
 
                             {/* Botões de ação */}
                             <View style={bottomSheetStyles.botoesRow}>
-                                {reporteSelecionado.donoId !== usuario?.uid
-                                    && reporteSelecionado.status === 'Pendente' && (
+                                {podeColetar && (
                                     <TouchableOpacity
                                         style={[bottomSheetStyles.botaoAcao, { backgroundColor: '#4CAF50' }]}
                                         onPress={() => Alert.alert(
@@ -208,26 +237,42 @@ export default function Mapa() {
                                             ]
                                         )}
                                     >
-                                        <MaterialIcons name="delete" size={18} color="white" />
+                                        <MaterialIcons name="recycling" size={18} color="white" />
                                         <Text style={bottomSheetStyles.botaoAcaoTexto}>Coletar</Text>
                                     </TouchableOpacity>
                                 )}
 
-                                {reporteSelecionado.donoId === usuario?.uid
-                                    && reporteSelecionado.status === 'Em Coleta' && (
+                                {podeConfirmar && (
                                     <TouchableOpacity
                                         style={[bottomSheetStyles.botaoAcao, { backgroundColor: '#1E90FF' }]}
                                         onPress={() => Alert.alert(
-                                            'Confirmar',
+                                            'Confirmar coleta',
                                             'A coleta foi realizada?',
                                             [
-                                                { text: 'Cancelar', style: 'cancel' },
+                                                { text: 'Não', style: 'cancel' },
                                                 { text: 'Sim', onPress: () => onConfirmar(reporteSelecionado.id) },
                                             ]
                                         )}
                                     >
                                         <MaterialIcons name="check-circle" size={18} color="white" />
                                         <Text style={bottomSheetStyles.botaoAcaoTexto}>Confirmar Coleta</Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                {podeCancelar && (
+                                    <TouchableOpacity
+                                        style={[bottomSheetStyles.botaoAcao, { backgroundColor: '#FF6B35' }]}
+                                        onPress={() => Alert.alert(
+                                            'Cancelar coleta',
+                                            'Deseja cancelar a coleta e recolocar o reporte como Pendente?',
+                                            [
+                                                { text: 'Não', style: 'cancel' },
+                                                { text: 'Sim', onPress: () => onCancelar(reporteSelecionado.id) },
+                                            ]
+                                        )}
+                                    >
+                                        <MaterialIcons name="cancel" size={18} color="white" />
+                                        <Text style={bottomSheetStyles.botaoAcaoTexto}>Cancelar Coleta</Text>
                                     </TouchableOpacity>
                                 )}
 

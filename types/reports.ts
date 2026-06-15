@@ -1,3 +1,6 @@
+// src/types/reporte.ts
+export type StatusReporte = "Pendente" | "Em Coleta" | "Resolvido" | "Cancelado";
+
 export type Reporte = {
     id: string;
     descricao: string;
@@ -5,10 +8,11 @@ export type Reporte = {
     imagem: string | null;
     timestamp: string;
     localizacao: { latitude: number; longitude: number };
-    status: "Pendente" | "Em Coleta" | "Resolvido";
+    status: StatusReporte;
     donoId: string;
     donoNome: string;
-    coletorId?: string;
-    coletorNome?: string;
-    resolvidoEm?: string;
+    coletorId?: string | null;
+    coletorNome?: string | null;
+    resolvidoEm?: string | null;
+    canceladoEm?: string | null;
 };
