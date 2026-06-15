@@ -1,4 +1,5 @@
 import { Text, View, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "../../../firebaseConfig";
@@ -20,7 +21,7 @@ export default function Perfil() {
     };
 
     return (
-        <View style={perfilStyle.container}>
+        <SafeAreaView style={perfilStyle.container} edges={['top']}>
 
             {/* Card do usuário */}
             <View style={perfilStyle.card}>
@@ -63,7 +64,7 @@ export default function Perfil() {
                 <Text style={perfilStyle.botaoLogoutTexto}>Sair da conta</Text>
             </TouchableOpacity>
 
-        </View>
+        </SafeAreaView>
     );
 }
 

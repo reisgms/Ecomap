@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
@@ -55,7 +56,7 @@ export default function Cadastro() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <Text style={styles.titulo}>Criar conta</Text>
 
             <Input title="Nome" placeholder="Seu nome" value={nome} onChangeText={setNome} />
@@ -72,7 +73,7 @@ export default function Cadastro() {
             <TouchableOpacity onPress={() => router.back()}>
                 <Text style={styles.link}>Já tem conta? Entrar</Text>
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     );
 }
 

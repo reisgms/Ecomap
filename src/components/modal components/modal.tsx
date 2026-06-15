@@ -8,8 +8,9 @@ import { db } from "../../../firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import { modalStyles } from "../components Sytles/modalStyles";
 import { useAuth } from '../../../contexts/authContext';
+import { coresPorTipo } from '../../../constantes/status';
 
-const tipos = ["Orgânico", "Reciclável", "Madeira", "Ferro", "Móveis", "Eletrodomésticos"];
+const tipos = Object.keys(coresPorTipo);
 
 type CustomModalProps = {
     visible: boolean;
@@ -43,13 +44,13 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
     }
 
     async function salvarReporte() {
-        if (!usuario) { alert('Usuário não autenticado'); return; }
-        if (selecionados.length === 0) { alert('Selecione ao menos um tipo de resíduo.'); return; }
+        if (!usuario) { Alert.alert('Erro', 'Usuário não autenticado'); return; }
+        if (selecionados.length === 0) { Alert.alert('Atenção', 'Selecione ao menos um tipo de resíduo.'); return; }
         if (salvando) return;
         setSalvando(true);
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') { alert('Permissão de localização negada'); return; }
+            if (status !== 'granted') { Alert.alert('Permissão negada', 'Permissão de localização negada'); return; }
             const local = await Location.getCurrentPositionAsync({});
 
             await addDoc(collection(db, 'reportes'), {
@@ -66,12 +67,12 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
                 donoNome: usuario.nome,
             });
 
-            alert('Reporte salvo com sucesso!');
+            Alert.alert('Sucesso', 'Reporte salvo com sucesso!');
             limparCache();
             onClose();
         } catch (error) {
             console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar no Firebase');
+            Alert.alert('Erro', 'Erro ao salvar o reporte. Tente novamente.');
         } finally {
             setSalvando(false);
         }

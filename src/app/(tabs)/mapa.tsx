@@ -1,9 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppleMaps, GoogleMaps } from 'expo-maps';
 import { useState } from 'react';
-import { Alert, Image, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { coresPorTipo, statusConfig } from '../../../constantes/status';
 import { useAuth } from '../../../contexts/authContext';
+import { useCluster } from '../../../hooks/useCluster';
 import { useLocation } from '../../../hooks/useLocation';
 import { usePermissoesReporte } from '../../../hooks/usePermissioesReporte';
 import { useReportes } from '../../../hooks/useReports';
@@ -12,26 +14,68 @@ import { CustomModal } from '../../components/modal components/modal';
 import { bottomSheetStyles } from '../../styles/mapaBottomSheetStyles';
 import { mapaStyle } from '../../styles/mapaStyles';
 
+const TIPOS = Object.keys(coresPorTipo);
+
 export default function Mapa() {
     const { usuario } = useAuth();
     const location = useLocation();
+    const insets = useSafeAreaInsets();
+
     const [modalCriarVisible, setModalCriarVisible] = useState(false);
     const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
+    const [clusterReportes, setClusterReportes] = useState<Reporte[] | null>(null);
 
-    const { reportes, handleColetar, handleConfirmarColeta, handleCancelarColeta } = useReportes(usuario, true);
+    const {
+        reportes,
+        filtroTipos,
+        setFiltroTipos,
+        handleColetar,
+        handleConfirmarColeta,
+        handleCancelarColeta,
+    } = useReportes(usuario, true);
 
-    // Deriva o reporte do array em tempo real — reflete atualizações do Firestore sem fechar o modal
-    const reporteSelecionado = idSelecionado ? (reportes.find(r => r.id === idSelecionado) ?? null) : null;
+    const clusters = useCluster(reportes, 40);
 
-    const { podeColetar, podeConfirmar, podeCancelar } = usePermissoesReporte(reporteSelecionado, usuario?.uid);
+    const reporteSelecionado = idSelecionado
+        ? (reportes.find(r => r.id === idSelecionado) ?? null)
+        : null;
+
+    const { podeColetar, podeConfirmar, podeCancelar } =
+        usePermissoesReporte(reporteSelecionado, usuario?.uid);
+
+    function toggleTipo(tipo: string) {
+        setFiltroTipos(prev =>
+            prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
+        );
+    }
+
+    function limparFiltro() {
+        setFiltroTipos([]);
+    }
 
     function handleMarkerClick(markerId: string | undefined) {
         if (!markerId) return;
-        setIdSelecionado(markerId);
+        const cluster = clusters.find(c => c.id === markerId);
+        if (!cluster) return;
+
+        if (cluster.reportes.length === 1) {
+            setIdSelecionado(cluster.reportes[0].id);
+        } else {
+            setClusterReportes(cluster.reportes);
+        }
     }
 
     function fecharDetalhes() {
         setIdSelecionado(null);
+    }
+
+    function fecharCluster() {
+        setClusterReportes(null);
+    }
+
+    function abrirReporteDoCluster(reporte: Reporte) {
+        setClusterReportes(null);
+        setIdSelecionado(reporte.id);
     }
 
     async function onColetar(id: string) {
@@ -64,24 +108,20 @@ export default function Mapa() {
         );
     }
 
-    // Google Maps markers (sem tintColor — não suportado)
-    const googleMarkers: GoogleMaps.Marker[] = reportes.map((reporte) => ({
-        id: reporte.id,
-        coordinates: {
-            latitude: reporte.localizacao.latitude,
-            longitude: reporte.localizacao.longitude,
-        },
-        title: reporte.tipos?.[0] ?? 'Reporte',
+    const googleMarkers: GoogleMaps.Marker[] = clusters.map((cluster) => ({
+        id: cluster.id,
+        coordinates: cluster.coordinates,
+        title: cluster.reportes.length === 1
+            ? (cluster.reportes[0].tipos?.[0] ?? 'Reporte')
+            : `${cluster.reportes.length} reportes`,
     }));
 
-    // Apple Maps markers (suporta tintColor)
-    const appleMarkers: AppleMaps.Marker[] = reportes.map((reporte) => ({
-        id: reporte.id,
-        coordinates: {
-            latitude: reporte.localizacao.latitude,
-            longitude: reporte.localizacao.longitude,
-        },
-        tintColor: coresPorTipo[reporte.tipos?.[0]] ?? '#FF6B35',
+    const appleMarkers: AppleMaps.Marker[] = clusters.map((cluster) => ({
+        id: cluster.id,
+        coordinates: cluster.coordinates,
+        tintColor: cluster.reportes.length === 1
+            ? (coresPorTipo[cluster.reportes[0].tipos?.[0]] ?? '#FF6B35')
+            : '#333333',
     }));
 
     const cameraPosition = {
@@ -92,9 +132,10 @@ export default function Mapa() {
         zoom: 15,
     };
 
+    const todosSelecionados = filtroTipos.length === 0;
+
     return (
         <View style={mapaStyle.container}>
-
             {Platform.OS === 'ios'
                 ? (
                     <AppleMaps.View
@@ -115,18 +156,41 @@ export default function Mapa() {
                 )
             }
 
-            {/* Legenda */}
-            <View style={mapaStyle.legenda}>
-                {Object.entries(coresPorTipo).map(([tipo, cor]) => (
-                    <View key={tipo} style={mapaStyle.legendaItem}>
-                        <View style={[mapaStyle.legendaCircle, { backgroundColor: cor }]} />
-                        <Text style={mapaStyle.legendaText}>{tipo}</Text>
-                    </View>
-                ))}
+            {/* Filtros de tipo — topo central, respeitando safe area */}
+            <View style={[mapaStyle.filtroBar, { top: insets.top + 8 }]}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={mapaStyle.filtroScroll}
+                >
+                    <TouchableOpacity
+                        style={[mapaStyle.chip, todosSelecionados && mapaStyle.chipAtivo]}
+                        onPress={limparFiltro}
+                    >
+                        <Text style={[mapaStyle.chipTexto, todosSelecionados && mapaStyle.chipTextoAtivo]}>
+                            Todos
+                        </Text>
+                    </TouchableOpacity>
+
+                    {TIPOS.map(tipo => {
+                        const ativo = filtroTipos.includes(tipo);
+                        return (
+                            <TouchableOpacity
+                                key={tipo}
+                                style={[mapaStyle.chip, ativo && mapaStyle.chipAtivo]}
+                                onPress={() => toggleTipo(tipo)}
+                            >
+                                <Text style={[mapaStyle.chipTexto, ativo && mapaStyle.chipTextoAtivo]}>
+                                    {tipo}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
             </View>
 
             {/* Botão criar reporte */}
-            <View style={mapaStyle.viewBotao}>
+            <View style={[mapaStyle.viewBotao, { bottom: insets.bottom + 30 }]}>
                 <TouchableOpacity style={mapaStyle.botao} onPress={() => setModalCriarVisible(true)}>
                     <Text style={mapaStyle.botaoTexto}>+</Text>
                 </TouchableOpacity>
@@ -135,7 +199,69 @@ export default function Mapa() {
             {/* Modal criar reporte */}
             <CustomModal visible={modalCriarVisible} onClose={() => setModalCriarVisible(false)} />
 
-            {/* Bottom sheet detalhes do reporte */}
+            {/* Modal lista de cluster */}
+            {clusterReportes && (
+                <Modal
+                    visible
+                    transparent
+                    animationType="slide"
+                    onRequestClose={fecharCluster}
+                >
+                    <TouchableOpacity
+                        style={bottomSheetStyles.overlay}
+                        activeOpacity={1}
+                        onPress={fecharCluster}
+                    />
+                    <View style={[bottomSheetStyles.bottomSheet, { paddingBottom: insets.bottom + 16 }]}>
+                        <View style={bottomSheetStyles.handle} />
+                        <Text style={[bottomSheetStyles.titulo, { marginBottom: 12 }]}>
+                            {clusterReportes.length} reportes neste local
+                        </Text>
+                        <FlatList
+                            data={clusterReportes}
+                            keyExtractor={r => r.id}
+                            showsVerticalScrollIndicator={false}
+                            renderItem={({ item }) => {
+                                const cfg = statusConfig[item.status] ?? statusConfig['Pendente'];
+                                return (
+                                    <TouchableOpacity
+                                        style={mapaStyle.clusterItem}
+                                        onPress={() => abrirReporteDoCluster(item)}
+                                    >
+                                        <View style={mapaStyle.clusterItemEsquerda}>
+                                            <Text style={mapaStyle.clusterItemTitulo}>
+                                                Reporte #{item.id.slice(0, 6)}
+                                            </Text>
+                                            <View style={mapaStyle.clusterItemTiposRow}>
+                                                {item.tipos.map(t => (
+                                                    <View
+                                                        key={t}
+                                                        style={[mapaStyle.clusterItemTipoBadge, { backgroundColor: coresPorTipo[t] ?? '#aaa' }]}
+                                                    >
+                                                        <Text style={mapaStyle.clusterItemTipoTexto}>{t}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                            {item.descricao ? (
+                                                <Text style={mapaStyle.clusterItemDescricao} numberOfLines={1}>
+                                                    {item.descricao}
+                                                </Text>
+                                            ) : null}
+                                        </View>
+                                        <View style={[mapaStyle.clusterItemBadge, { backgroundColor: cfg.cor }]}>
+                                            <MaterialIcons name={cfg.icone} size={12} color="white" />
+                                            <Text style={mapaStyle.clusterItemBadgeTexto}>{item.status}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            }}
+                            ItemSeparatorComponent={() => <View style={mapaStyle.clusterSeparador} />}
+                        />
+                    </View>
+                </Modal>
+            )}
+
+            {/* Bottom sheet detalhes do reporte individual */}
             {reporteSelecionado && (
                 <Modal
                     visible={!!reporteSelecionado}
@@ -149,12 +275,11 @@ export default function Mapa() {
                         onPress={fecharDetalhes}
                     />
 
-                    <View style={bottomSheetStyles.bottomSheet}>
+                    <View style={[bottomSheetStyles.bottomSheet, { paddingBottom: insets.bottom + 16 }]}>
                         <View style={bottomSheetStyles.handle} />
 
                         <ScrollView showsVerticalScrollIndicator={false}>
 
-                            {/* Header */}
                             <View style={bottomSheetStyles.header}>
                                 <Text style={bottomSheetStyles.titulo}>
                                     Reporte #{reporteSelecionado.id.slice(0, 6)}
@@ -172,7 +297,6 @@ export default function Mapa() {
                                 </View>
                             </View>
 
-                            {/* Imagem */}
                             {reporteSelecionado.imagem && (
                                 <Image
                                     source={{ uri: reporteSelecionado.imagem }}
@@ -180,7 +304,6 @@ export default function Mapa() {
                                 />
                             )}
 
-                            {/* Tipos */}
                             <View style={bottomSheetStyles.tiposRow}>
                                 {reporteSelecionado.tipos.map(tipo => (
                                     <View
@@ -192,7 +315,6 @@ export default function Mapa() {
                                 ))}
                             </View>
 
-                            {/* Infos */}
                             <View style={bottomSheetStyles.infoRow}>
                                 <MaterialIcons name="person" size={16} color="#666" />
                                 <Text style={bottomSheetStyles.infoTexto}>
@@ -223,7 +345,6 @@ export default function Mapa() {
                                 </Text>
                             </View>
 
-                            {/* Botões de ação */}
                             <View style={bottomSheetStyles.botoesRow}>
                                 {podeColetar && (
                                     <TouchableOpacity
@@ -291,4 +412,3 @@ export default function Mapa() {
         </View>
     );
 }
-

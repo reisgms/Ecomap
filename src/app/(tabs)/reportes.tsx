@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Alert, FlatList, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/authContext";
 import { useReportes } from "@/hooks/useReports";
 import { ReportCard } from "../../components/modal components/reportCards";
@@ -50,7 +51,7 @@ export default function Reportes() {
     }
 
     return (
-        <View style={reportesStyles.container}>
+        <SafeAreaView style={reportesStyles.container} edges={['top']}>
             <View style={reportesStyles.tabs}>
                 {filtros.map(f => (
                     <TouchableOpacity
@@ -89,6 +90,6 @@ export default function Reportes() {
                 )}
                 contentContainerStyle={{ paddingBottom: 20 }}
             />
-        </View>
+        </SafeAreaView>
     );
 }

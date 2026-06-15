@@ -3,6 +3,7 @@ import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import { MaterialIcons } from '@expo/vector-icons';
 import { cardStyles } from '../components Sytles/cardStyles';
 import { statusConfig } from '../../../constantes/status';
+import { StatusReporte } from '../../../types/reports';
 
 type ReportCardProps = {
     id: string;
@@ -11,7 +12,7 @@ type ReportCardProps = {
     imagem?: string;
     timestamp: string;
     localizacao: { latitude: number; longitude: number };
-    status: "Pendente" | "Em Coleta" | "Resolvido" | "Cancelado";
+    status: StatusReporte;
     donoNome?: string;
     coletorNome?: string | null;
     isDono?: boolean;

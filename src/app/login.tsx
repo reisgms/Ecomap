@@ -1,6 +1,7 @@
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { Image, Text, TouchableOpacity, View, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import { useRouter } from 'expo-router';
@@ -81,6 +82,7 @@ export default function Login() {
     };
 
     return (
+        <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={loginStyle.content}>
             <Image style={{ width: 120, height: 120 }} source={logo} resizeMode="contain" />
             <Text>Juntos por um ambiente mais limpo e sustentavel</Text>
@@ -176,5 +178,6 @@ export default function Login() {
                 </View>
             </View>
         </ScrollView>
+        </SafeAreaView>
     );
 }

@@ -8,37 +8,101 @@ export const mapaStyle = StyleSheet.create({
     mapa: {
         flex: 1,
     },
-    legenda: {
+
+    // Barra de filtros — topo central, posição top definida dinamicamente com insets
+    filtroBar: {
         position: "absolute",
-        top: 16,          // ← movida para cima para não conflitar com o bottom sheet
-        left: 10,
-        backgroundColor: "rgba(255,255,255,0.9)",
-        padding: 12,
-        borderRadius: 10,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        left: 0,
+        right: 0,
+        alignItems: "center",
     },
-    legendaItem: {
+    filtroScroll: {
         flexDirection: "row",
         alignItems: "center",
-        marginVertical: 3,
+        gap: 8,
+        paddingHorizontal: 16,
     },
-    legendaCircle: {
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        marginRight: 8,
+    chip: {
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.92)",
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
     },
-    legendaText: {
-        fontSize: 12,
+    chipAtivo: {
+        backgroundColor: "#4CAF50",
+    },
+    chipTexto: {
+        fontSize: 13,
+        fontWeight: "600",
         color: "#333",
     },
+    chipTextoAtivo: {
+        color: "#fff",
+    },
+
+    // Lista de cluster
+    clusterItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+    },
+    clusterItemEsquerda: {
+        flex: 1,
+        marginRight: 10,
+    },
+    clusterItemTitulo: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#222',
+        marginBottom: 4,
+    },
+    clusterItemTiposRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 4,
+        marginBottom: 4,
+    },
+    clusterItemTipoBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+    clusterItemTipoTexto: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: 'bold',
+    },
+    clusterItemDescricao: {
+        fontSize: 12,
+        color: '#777',
+    },
+    clusterItemBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 12,
+        gap: 4,
+    },
+    clusterItemBadgeTexto: {
+        color: 'white',
+        fontSize: 11,
+        fontWeight: 'bold',
+    },
+    clusterSeparador: {
+        height: 1,
+        backgroundColor: '#eee',
+    },
+
+    // Botão flutuante de criar reporte
     viewBotao: {
         position: "absolute",
-        bottom: 30,
         right: 16,
     },
     botao: {
@@ -49,7 +113,7 @@ export const mapaStyle = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         elevation: 6,
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.2,
         shadowRadius: 4,

@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/authContext';
 
 export default function BemVindo() {
@@ -31,7 +32,7 @@ export default function BemVindo() {
         : 'Que bom que voltou! Veja os novos reportes no mapa e continue fazendo a diferença.';
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                 <View style={styles.iconContainer}>
                     <MaterialIcons name="eco" size={72} color="#4CAF50" />
@@ -64,7 +65,7 @@ export default function BemVindo() {
                     <MaterialIcons name="arrow-forward" size={20} color="white" />
                 </TouchableOpacity>
             </Animated.View>
-        </View>
+        </SafeAreaView>
     );
 }
 
