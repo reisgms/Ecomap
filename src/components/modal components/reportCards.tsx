@@ -66,11 +66,11 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                         <View style={banner.botoesRow}>
                             <TouchableOpacity style={banner.botaoConfirmar} onPress={onConfirmar}>
                                 <MaterialIcons name="check-circle" size={15} color="white" />
-                                <Text style={banner.botaoTexto}>Confirmar</Text>
+                                <Text style={banner.botaoTexto}>Coletado</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={banner.botaoCancelar} onPress={onCancelar}>
                                 <MaterialIcons name="cancel" size={15} color="white" />
-                                <Text style={banner.botaoTexto}>Cancelar</Text>
+                                <Text style={banner.botaoTexto}>Não Coletado</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

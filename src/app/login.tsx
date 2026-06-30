@@ -49,7 +49,9 @@ export default function Login() {
                 .finally(() => setLoadingGoogle(false));
 
         } else if (response?.type === 'error') {
-            Alert.alert('Erro', 'Login com Google cancelado ou falhou.');
+            Alert.alert('Erro', 'Login com Google falhou. Tente novamente.');
+            setLoadingGoogle(false);
+        } else if (response?.type === 'dismiss' || response?.type === 'cancel') {
             setLoadingGoogle(false);
         }
     }, [response]);
