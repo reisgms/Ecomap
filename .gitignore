@@ -44,6 +44,5 @@ app-example
 /ios
 /android
 
-# Firebase config files (contêm chaves sensíveis — entregar separado)
-google-services.json
+# Firebase config iOS
 GoogleService-Info.plist
