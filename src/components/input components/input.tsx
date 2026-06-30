@@ -1,68 +1,55 @@
-import React, { forwardRef, Fragment, LegacyRef} from "react";
-
-import { AntDesign, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import React, { forwardRef, LegacyRef, useState } from "react";
 import { Text, TextInput, TextInputProps, TouchableOpacity, View } from "react-native";
-import { Styles } from "./styles";
+import { inputStyles } from "../components Sytles/inputStyles";
 
+type IconComponent = React.ComponentType<{ name: any; size?: number; color?: string }>;
 
-type IconComponent = React.ComponentType<React.ComponentProps<typeof MaterialIcons>> |
-                    React.ComponentType<React.ComponentProps<typeof FontAwesome>> |
-                    React.ComponentType<React.ComponentProps<typeof FontAwesome5 >> |
-                    React.ComponentType<React.ComponentProps<typeof AntDesign >>;  
+type InputProps = TextInputProps & {
+    IconLeft?: IconComponent;
+    IconLeftName?: string;
+    title?: string;
+    onIconLeftPress?: () => void;
+};
 
+export const Input = forwardRef((props: InputProps, ref: LegacyRef<TextInput> | null) => {
+    const { IconLeft, IconLeftName, title, onIconLeftPress, ...rest } = props;
+    const [focado, setFocado] = useState(false);
+    const [senhaVisivel, setSenhaVisivel] = useState(false);
 
-type props = TextInputProps & {
-    IconLeft?: IconComponent,
-    IconRight?: IconComponent,
-    IconLeftName?: string,
-    IconRightName?: string,
-    title?: string,
-    onIconLeftPress?: () => void,
-    onIconRightPress?: () => void
-}
-
-export const Input = forwardRef((Props: props, ref: LegacyRef<TextInput> | null) => {
-
-    const { IconLeft, IconRight, IconLeftName, IconRightName, title, onIconLeftPress, onIconRightPress, ...rest } = Props;
-    
-    const calcularEspaçoIcone = () => {
-        if (IconLeft && IconRight)
-            { return '80%'
-        }else if (IconLeft || IconRight)
-            { return '90%'
-        } else 
-            { return '100%' }
-    }
-
-    const calcularPaddingRight = () => {
-        if (IconLeft && IconRight){
-            return 10;
-        } else if(IconLeft || IconRight){
-            return 10;
-        } else{
-            return 20;
-        }
-    };
+    const ehSenha = !!rest.secureTextEntry;
 
     return (
-        <Fragment>
-            <Text style={Styles.loginLabel}>{title}</Text>
-            <View style={[Styles.inputBox, {paddingRight: calcularPaddingRight()}]}>
+        <View style={inputStyles.wrapper}>
+            {title && <Text style={inputStyles.loginLabel}>{title}</Text>}
+            <View style={[inputStyles.inputBox, focado && inputStyles.inputBoxFocado]}>
                 {IconLeft && IconLeftName && (
-                    <TouchableOpacity>
-                        <IconLeft name={IconLeftName as any} size={20} color={'gray'} style={Styles.icon}/>
-                    </TouchableOpacity>
+                    onIconLeftPress
+                        ? <TouchableOpacity onPress={onIconLeftPress}>
+                            <IconLeft name={IconLeftName} size={20} color={focado ? '#4CAF50' : 'gray'} style={inputStyles.icon} />
+                          </TouchableOpacity>
+                        : <IconLeft name={IconLeftName} size={20} color={focado ? '#4CAF50' : 'gray'} style={inputStyles.icon} />
                 )}
-                <TextInput style={[Styles.input, {width: calcularEspaçoIcone()}
-                ]}
-                {...rest}/>
 
-                {IconRight && IconRightName && (
-                    <TouchableOpacity>
-                        <IconRight name={IconRightName as any} size={20} color={'gray'} style={Styles.icon}/>
+                <TextInput
+                    ref={ref}
+                    style={inputStyles.input}
+                    secureTextEntry={ehSenha && !senhaVisivel}
+                    onFocus={() => setFocado(true)}
+                    onBlur={() => setFocado(false)}
+                    {...rest}
+                />
+
+                {ehSenha && (
+                    <TouchableOpacity onPress={() => setSenhaVisivel(v => !v)} style={inputStyles.iconBotao}>
+                        <MaterialIcons
+                            name={senhaVisivel ? 'visibility' : 'visibility-off'}
+                            size={20}
+                            color={focado ? '#4CAF50' : 'gray'}
+                        />
                     </TouchableOpacity>
                 )}
             </View>
-        </Fragment>
-    )
+        </View>
+    );
 });

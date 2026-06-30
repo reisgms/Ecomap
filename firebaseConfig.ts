@@ -1,5 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeApp } from 'firebase/app';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAPC_u7IqENxeV4pJh_TNGRRkju3fYQ6fY",
@@ -7,9 +11,13 @@ const firebaseConfig = {
   projectId: "ecomap-5e73e",
   storageBucket: "ecomap-5e73e.firebasestorage.app",
   messagingSenderId: "217945753246",
-  appId: "1:217945753246:web:5e473aaf3acf2e5c9fdd8f"
+  appId: "1:217945753246:web:b9c3f7b745cfb2649fdd8f"
 };
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+
+export const auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage as any),
+});
+
+export const db = getFirestore(app);
