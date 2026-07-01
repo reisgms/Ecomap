@@ -34,10 +34,10 @@ export const Input = forwardRef((props: InputProps, ref: LegacyRef<TextInput> | 
                 <TextInput
                     ref={ref}
                     style={inputStyles.input}
-                    secureTextEntry={ehSenha && !senhaVisivel}
                     onFocus={() => setFocado(true)}
                     onBlur={() => setFocado(false)}
                     {...rest}
+                    secureTextEntry={ehSenha && !senhaVisivel}
                 />
 
                 {ehSenha && (
