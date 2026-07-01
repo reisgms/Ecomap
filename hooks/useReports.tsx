@@ -51,6 +51,15 @@ export function useReportes(
         return Math.floor((agora - criado) / (1000 * 60 * 60 * 24));
     }
 
+    async function tentarNotificar(expoPushToken: string | null | undefined, titulo: string, corpo: string) {
+        if (!expoPushToken) return;
+        try {
+            await enviarPushNotification(expoPushToken, titulo, corpo);
+        } catch (e) {
+            console.warn('Falha ao enviar notificação push:', e);
+        }
+    }
+
     async function handleColetar(reporteId: string) {
         if (!usuario) return;
         const reporteRef = doc(db, 'reportes', reporteId);
@@ -62,21 +71,26 @@ export function useReportes(
             throw new Error('Este reporte já foi coletado por outro usuário.');
         }
 
-        await updateDoc(reporteRef, {
-            status: 'Em Coleta',
-            coletorId: usuario.uid,
-            coletorNome: usuario.nome,
-        });
+        try {
+            await updateDoc(reporteRef, {
+                status: 'Em Coleta',
+                coletorId: usuario.uid,
+                coletorNome: usuario.nome,
+            });
+        } catch (e: any) {
+            if (e?.code === 'permission-denied') {
+                throw new Error('Este reporte já foi coletado por outro usuário.');
+            }
+            throw e;
+        }
 
         const donoSnap = await getDoc(doc(db, 'usuarios', reporte.donoId));
         const dono = donoSnap.data();
-        if (dono?.expoPushToken) {
-            await enviarPushNotification(
-                dono.expoPushToken,
-                '♻️ Alguém quer coletar seu reporte!',
-                `${usuario.nome} se ofereceu para coletar: ${reporte.tipos?.join(', ')}`
-            );
-        }
+        await tentarNotificar(
+            dono?.expoPushToken,
+            '♻️ Alguém quer coletar seu reporte!',
+            `${usuario.nome} se ofereceu para coletar: ${reporte.tipos?.join(', ')}`
+        );
     }
 
     async function handleConfirmarColeta(reporteId: string) {
@@ -95,13 +109,11 @@ export function useReportes(
         if (reporte.coletorId) {
             const coletorSnap = await getDoc(doc(db, 'usuarios', reporte.coletorId));
             const coletor = coletorSnap.data();
-            if (coletor?.expoPushToken) {
-                await enviarPushNotification(
-                    coletor.expoPushToken,
-                    '✅ Coleta confirmada!',
-                    `${usuario.nome} confirmou que você coletou: ${reporte.tipos?.join(', ')}`
-                );
-            }
+            await tentarNotificar(
+                coletor?.expoPushToken,
+                '✅ Coleta confirmada!',
+                `${usuario.nome} confirmou que você coletou: ${reporte.tipos?.join(', ')}`
+            );
         }
     }
 
@@ -122,13 +134,11 @@ export function useReportes(
         if (reporte.coletorId) {
             const coletorSnap = await getDoc(doc(db, 'usuarios', reporte.coletorId));
             const coletor = coletorSnap.data();
-            if (coletor?.expoPushToken) {
-                await enviarPushNotification(
-                    coletor.expoPushToken,
-                    '❌ Coleta cancelada',
-                    `${usuario.nome} cancelou a coleta: ${reporte.tipos?.join(', ')}`
-                );
-            }
+            await tentarNotificar(
+                coletor?.expoPushToken,
+                '❌ Coleta cancelada',
+                `${usuario.nome} cancelou a coleta: ${reporte.tipos?.join(', ')}`
+            );
         }
     }
 
