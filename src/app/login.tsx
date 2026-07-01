@@ -1,18 +1,16 @@
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import { Image, Text, TouchableOpacity, View, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { Image, Text, TouchableOpacity, View, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import logo from '../../assets/images/logo.png';
 import loginStyle from '../styles/loginStyles';
 import { useRouter } from 'expo-router';
 import { Input } from '../components/input components/input';
+import { SpinningIcon } from '../components/SpinningIcon';
 import { useState, useEffect } from 'react';
 import { auth } from '../../firebaseConfig';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-
-WebBrowser.maybeCompleteAuthSession();
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
 export default function Login() {
     const router = useRouter();
@@ -22,39 +20,40 @@ export default function Login() {
     const [loadingEmail, setLoadingEmail] = useState(false);
     const [loadingGoogle, setLoadingGoogle] = useState(false);
 
-    // ✅ Separe os clientIds por plataforma
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        webClientId: '217945753246-borcksj5edesl7kej6ahr6vtsgvkpe64.apps.googleusercontent.com',
-        androidClientId: '217945753246-ttqmhl5ns4b84h8g91flk1d07koh46cr.apps.googleusercontent.com',
-        iosClientId: '217945753246-6fr2jt110qds05rca43kv2q0rl8lfm23.apps.googleusercontent.com',
-    });
-
-    // ✅ Login com Google — verifica idToken antes de usar
     useEffect(() => {
-        if (response?.type === 'success' && response.authentication) {
-            const { idToken, accessToken } = response.authentication;
+        GoogleSignin.configure({
+            webClientId: '217945753246-borcksj5edesl7kej6ahr6vtsgvkpe64.apps.googleusercontent.com',
+        });
+    }, []);
 
+    async function loginComGoogle() {
+        setLoadingGoogle(true);
+        try {
+            await GoogleSignin.hasPlayServices();
+            const resposta = await GoogleSignin.signIn();
+            if (resposta.type !== 'success') return;
+
+            const idToken = resposta.data.idToken;
             if (!idToken) {
                 Alert.alert('Erro', 'Não foi possível obter o token do Google.');
-                setLoadingGoogle(false);
                 return;
             }
 
-            const credential = GoogleAuthProvider.credential(idToken, accessToken);
-            signInWithCredential(auth, credential)
-                .catch((error) => {
-                    console.error('Erro Google:', error);
-                    Alert.alert('Erro', 'Falha ao autenticar com Google.');
-                })
-                .finally(() => setLoadingGoogle(false));
-
-        } else if (response?.type === 'error') {
-            Alert.alert('Erro', 'Login com Google falhou. Tente novamente.');
-            setLoadingGoogle(false);
-        } else if (response?.type === 'dismiss' || response?.type === 'cancel') {
+            const credential = GoogleAuthProvider.credential(idToken);
+            await signInWithCredential(auth, credential);
+        } catch (error: any) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED || error.code === statusCodes.IN_PROGRESS) {
+                // usuário cancelou ou já há um login em andamento — não exibe erro
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert('Erro', 'Google Play Services não está disponível ou está desatualizado.');
+            } else {
+                console.error('Erro Google:', error);
+                Alert.alert('Erro', 'Falha ao autenticar com Google.');
+            }
+        } finally {
             setLoadingGoogle(false);
         }
-    }, [response]);
+    }
 
     // ✅ Login com email/senha
     const loginEmailSenha = async () => {
@@ -95,14 +94,11 @@ export default function Login() {
                 {/* ✅ Botão Google — ícone e texto como irmãos no View */}
                 <TouchableOpacity
                     style={loginStyle.googleButton}
-                    disabled={!request || loadingGoogle}
-                    onPress={() => {
-                        setLoadingGoogle(true);
-                        promptAsync();
-                    }}
+                    disabled={loadingGoogle}
+                    onPress={loginComGoogle}
                 >
                     {loadingGoogle ? (
-                        <ActivityIndicator size="small" color="#333" />
+                        <SpinningIcon size={22} />
                     ) : (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <AntDesign name="google" size={20} />
@@ -144,7 +140,7 @@ export default function Login() {
                     disabled={loadingEmail}
                 >
                     {loadingEmail ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <SpinningIcon size={22} />
                     ) : (
                         <>
                             <MaterialIcons name="login" size={20} color="white" />
