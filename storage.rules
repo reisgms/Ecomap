@@ -1,0 +1,46 @@
+// ============================================================
+// REGRAS DE SEGURANÇA DO FIREBASE STORAGE — ECOMAP
+// ============================================================
+//
+// COMO APLICAR:
+//
+// OPÇÃO A — Firebase CLI (recomendado):
+//   1. Instale a CLI: npm install -g firebase-tools
+//   2. Login: firebase login
+//   3. Inicie o projeto (se ainda não fez): firebase init storage
+//      - Quando perguntar o arquivo de regras, aponte para este arquivo
+//   4. Publique: firebase deploy --only storage:rules
+//
+// OPÇÃO B — Console Firebase (mais rápido para testes):
+//   1. Acesse https://console.firebase.google.com
+//   2. Selecione o projeto "ecomap"
+//   3. No menu lateral: Storage → Regras
+//   4. Substitua o conteúdo pelo bloco "rules_version" abaixo
+//   5. Clique em "Publicar"
+//
+// ============================================================
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ----------------------------------------------------------
+    // PASTA: reportes/{uid}-{timestamp}.jpg
+    // ----------------------------------------------------------
+    match /reportes/{arquivo} {
+
+      // Qualquer usuário autenticado pode ver as fotos dos reportes
+      allow read: if request.auth != null;
+
+      // Só pode enviar se:
+      //  - estiver autenticado
+      //  - o nome do arquivo começar com o próprio uid (evita sobrescrever foto de outro usuário)
+      //  - o conteúdo for imagem
+      //  - o arquivo tiver no máximo 5MB
+      allow write: if request.auth != null
+        && arquivo.matches(request.auth.uid + '-.*')
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+  }
+}

@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { ActivityIndicator, Alert, Modal, View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Input } from '../input components/input';
-import { db } from "../../../firebaseConfig";
+import { db, storage } from "../../../firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { modalStyles } from "../components Sytles/modalStyles";
 import { useAuth } from '../../../contexts/authContext';
 import { coresPorTipo } from '../../../constantes/status';
@@ -23,11 +25,13 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
     const [descricao, setDescricao] = useState('');
     const [selecionados, setSelecionados] = useState<string[]>([]);
     const [salvando, setSalvando] = useState(false);
+    const [progressoUpload, setProgressoUpload] = useState(0);
 
     function limparCache() {
         setImage(null);
         setDescricao('');
         setSelecionados([]);
+        setProgressoUpload(0);
     }
 
     async function abrirCamera() {
@@ -35,6 +39,38 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
         if (status !== 'granted') { alert('Permissão para acessar a câmera negada'); return; }
         const resultado = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 1 });
         if (!resultado.canceled) setImage(resultado.assets[0].uri);
+    }
+
+    async function comprimirImagem(uri: string): Promise<string> {
+        const contexto = ImageManipulator.manipulate(uri).resize({ width: 1280 });
+        const imagemRenderizada = await contexto.renderAsync();
+        const resultado = await imagemRenderizada.saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
+        return resultado.uri;
+    }
+
+    async function uploadImagem(uri: string, uid: string): Promise<string> {
+        const uriComprimida = await comprimirImagem(uri);
+        const resposta = await fetch(uriComprimida);
+        const blob = await resposta.blob();
+        const imagemRef = storageRef(storage, `reportes/${uid}-${Date.now()}.jpg`);
+        const tarefa = uploadBytesResumable(imagemRef, blob);
+
+        return new Promise<string>((resolve, reject) => {
+            tarefa.on(
+                'state_changed',
+                (snapshot) => {
+                    setProgressoUpload(snapshot.bytesTransferred / snapshot.totalBytes);
+                },
+                reject,
+                async () => {
+                    try {
+                        resolve(await getDownloadURL(tarefa.snapshot.ref));
+                    } catch (erro) {
+                        reject(erro);
+                    }
+                }
+            );
+        });
     }
 
     function marcarTipo(tipo: string) {
@@ -48,13 +84,18 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
         if (selecionados.length === 0) { Alert.alert('Atenção', 'Selecione ao menos um tipo de resíduo.'); return; }
         if (salvando) return;
         setSalvando(true);
+        setProgressoUpload(0);
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') { Alert.alert('Permissão negada', 'Permissão de localização negada'); return; }
-            const local = await Location.getCurrentPositionAsync({});
+
+            const [local, imagemUrl] = await Promise.all([
+                Location.getCurrentPositionAsync({}),
+                image ? uploadImagem(image, usuario.uid) : Promise.resolve(null),
+            ]);
 
             await addDoc(collection(db, 'reportes'), {
-                imagem: image,
+                imagem: imagemUrl,
                 descricao,
                 tipos: selecionados,
                 timestamp: new Date().toISOString(),
@@ -119,7 +160,12 @@ export const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose }) =>
                         </TouchableOpacity>
                         <TouchableOpacity style={modalStyles.saveButton} onPress={salvarReporte} disabled={salvando}>
                             {salvando
-                                ? <ActivityIndicator color="#fff" size="small" />
+                                ? (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <ActivityIndicator color="#fff" size="small" />
+                                        {image && <Text style={modalStyles.saveText}>{Math.round(progressoUpload * 100)}%</Text>}
+                                    </View>
+                                )
                                 : <Text style={modalStyles.saveText}>Salvar</Text>
                             }
                         </TouchableOpacity>
