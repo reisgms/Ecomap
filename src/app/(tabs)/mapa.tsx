@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppleMaps, GoogleMaps } from 'expo-maps';
-import { useState } from 'react';
-import { Alert, FlatList, Image, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Easing, FlatList, Image, Linking, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { coresPorTipo, statusConfig } from '../../../constantes/status';
 import { useAuth } from '../../../contexts/authContext';
@@ -18,12 +18,25 @@ const TIPOS = Object.keys(coresPorTipo);
 
 export default function Mapa() {
     const { usuario } = useAuth();
-    const location = useLocation();
+    const { location, status: statusLocalizacao, solicitarLocalizacao } = useLocation();
     const insets = useSafeAreaInsets();
 
     const [modalCriarVisible, setModalCriarVisible] = useState(false);
     const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
     const [clusterReportes, setClusterReportes] = useState<Reporte[] | null>(null);
+
+    const rotacaoIcone = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(rotacaoIcone, {
+                toValue: 1,
+                duration: 1500,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+    }, [rotacaoIcone]);
 
     const {
         reportes,
@@ -101,9 +114,36 @@ export default function Mapa() {
     }
 
     if (!location) {
+        if (statusLocalizacao === 'negada' || statusLocalizacao === 'erro') {
+            return (
+                <View style={mapaStyle.loadingContainer}>
+                    <MaterialIcons name="location-off" size={48} color="#FF6B35" />
+                    <Text style={mapaStyle.loadingTexto}>
+                        {statusLocalizacao === 'negada'
+                            ? 'Precisamos da sua localização para mostrar o mapa'
+                            : 'Não foi possível obter sua localização. Verifique se o GPS está ligado.'}
+                    </Text>
+                    <TouchableOpacity style={mapaStyle.loadingBotao} onPress={solicitarLocalizacao}>
+                        <Text style={mapaStyle.loadingBotaoTexto}>Tentar novamente</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => Linking.openSettings()}>
+                        <Text style={mapaStyle.loadingLink}>Abrir configurações do app</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        const rotate = rotacaoIcone.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['0deg', '360deg'],
+        });
+
         return (
-            <View style={mapaStyle.container}>
-                <Text>Carregando Mapa...</Text>
+            <View style={mapaStyle.loadingContainer}>
+                <Animated.View style={{ transform: [{ rotate }] }}>
+                    <MaterialIcons name="explore" size={48} color="#4CAF50" />
+                </Animated.View>
+                <Text style={mapaStyle.loadingTexto}>Carregando mapa...</Text>
             </View>
         );
     }
@@ -151,6 +191,8 @@ export default function Mapa() {
                         cameraPosition={cameraPosition}
                         markers={googleMarkers}
                         showsUserLocation
+                        uiSettings={{ zoomControlsEnabled: false }}
+                        contentPadding={{ bottom: insets.bottom + 100, end: 16 }}
                         onMarkerClick={(marker) => handleMarkerClick(marker.id)}
                     />
                 )
