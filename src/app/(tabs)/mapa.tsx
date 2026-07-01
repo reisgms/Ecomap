@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { AppleMaps, GoogleMaps } from 'expo-maps';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, FlatList, Image, Linking, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, FlatList, Image, Linking, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { coresPorTipo, statusConfig } from '../../../constantes/status';
 import { useAuth } from '../../../contexts/authContext';
@@ -11,6 +11,7 @@ import { usePermissoesReporte } from '../../../hooks/usePermissioesReporte';
 import { useReportes } from '../../../hooks/useReports';
 import { Reporte } from '../../../types/reports';
 import { CustomModal } from '../../components/modal components/modal';
+import { SpinningIcon } from '../../components/SpinningIcon';
 import { bottomSheetStyles } from '../../styles/mapaBottomSheetStyles';
 import { mapaStyle } from '../../styles/mapaStyles';
 
@@ -24,19 +25,6 @@ export default function Mapa() {
     const [modalCriarVisible, setModalCriarVisible] = useState(false);
     const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
     const [clusterReportes, setClusterReportes] = useState<Reporte[] | null>(null);
-
-    const rotacaoIcone = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        Animated.loop(
-            Animated.timing(rotacaoIcone, {
-                toValue: 1,
-                duration: 1500,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
-        ).start();
-    }, [rotacaoIcone]);
 
     const {
         reportes,
@@ -133,16 +121,9 @@ export default function Mapa() {
             );
         }
 
-        const rotate = rotacaoIcone.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0deg', '360deg'],
-        });
-
         return (
             <View style={mapaStyle.loadingContainer}>
-                <Animated.View style={{ transform: [{ rotate }] }}>
-                    <MaterialIcons name="explore" size={48} color="#4CAF50" />
-                </Animated.View>
+                <SpinningIcon size={56} />
                 <Text style={mapaStyle.loadingTexto}>Carregando mapa...</Text>
             </View>
         );
