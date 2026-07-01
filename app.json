@@ -16,11 +16,6 @@
       "supportsTablet": true
     },
     "android": {
-      "config":{
-        "googleMaps":{
-          "apiKey": "AIzaSyBzxUya4szE4JizxSB0a3AwcGNxKfbuL3s"
-        }
-      },
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION"
